@@ -1,0 +1,167 @@
+---
+title: "The estimation of 2019 Canadian General Election with the votes of the whole population."
+author: "Aochen Hu"
+date: "15 December, 2020"
+output: pdf_document
+---
+# Abstract
+
+  To encourage people vote during the election, the prediction of 2019 Canadian Election result of whole population votes could be demonstrated to show the importance of voting. The winner might be different from the actual result since the data is different. It is essential for people to understand the significance of voting because it relates to their daily lives and benefits by the policies and rules that publish by government. This report shows the winner is different from the actual result, with the influence of the variables of province, age and education. Gender and employment could also be important, while they do not have a strong relationship with the prediction in this model.
+  
+Keywords: Election, Vote, Census
+
+# Introduction
+  
+  Voting is the essential part of general elections, while some populations deny voting during the election because of several reasons. This issue could largely affect the result of the election since different citizens would have various choices of their ideal Prime Minister. Thus, the reliability of the election result has been a controversial problem since some people doubt whether the winner would be different if everyone votes.
+ 
+  This report would demonstrate the result of 2019 Canadian General Election if every qualified citizen had voted for the election. The estimation would use the 2017 Canadian census dataset to build a multilevel regression model with post-stratification, which predict the result by assuming the whole Canadian population participated in the voting section. 
+
+  The remainder of this paper is organized as follows. In Section "Methodology", the discussion of the simulation of the data and the reason of choosing certain distributions and parameters would demonstrate in “Data”; while section "Model" specifies the R code and the multilevel regression results. Section "Results" analyzes the regression tables, figures, and intuitions. Section "Discussion" summarises the simulation and provides a conclusion with the meaning of the results and also the impacts. "Weaknesses" discusses the weaknesses of this study and section "Next Steps" discusses what future study should focus on.
+
+# Methodology
+  
+  This section would be the demonstration of the prediction of 2019 Election result with the vote of whole population. The multilevel regression could show the relationship between the result and each variables, and post-stratification could calculate the final result. Before the calculation, the data has been cleaned by classified variables, and the model is built on the cleaned data, which could provide a more specific result.
+  
+## Data
+
+  The data that has used in this report is 2019 online survey data and the General Social Survey data that collect through the CHASS website of the University of Toronto. The 2019 online survey data contains 37822 observations and 620 variables, after the cleaning process, the remaining 6 variables would be the survey data which is used in the following model construction. The variables are the vote choices, gender,age, province, employment, education. Choosing these variables as the ones to analyze is because they have the least empty data and also they are essentials of citizens information. Since the report is going to predict the election results, the vote choice is necessary to study; also, citizens' gender, age and provinces they belong are significant to classify groups. In addition, employment and education are important factors that might affect people's choice of the candidates that they want to vote since each party gives different benefits and policies.
+  
+  The General Social Survey data was collected in 2017, and there are 20602 observations and 81 variables in total. After the cleaning process, the remaining 348 observations and 5 variables would be the census data to analyze the results. In order to do the multilevel regression, the variables are the same as the ones in the survey data, and they are gender, age, province, employment, and education. The following secion would be the demonstration of the model and also the process of prediction.
+
+## Model
+```{r, include=FALSE}
+library(tidyverse)
+library(dplyr)
+library(lme4)
+library(plotrix)
+library(gplots)
+library(ROCR)
+
+survey_data <- read_csv("/Users/aochenhu/Desktop/STA 304 FInal/survey_data.csv")
+```
+
+```{r, include=FALSE}
+census_data <- read_csv("/Users/aochenhu/Desktop/STA 304 FInal/census_data.csv")
+```
+
+```{r, include=FALSE}
+# Creating the Model
+liberal_model <- glmer(vote_liberal ~ age_grp + gender + new_emp + new_educ + (1|province), data=survey_data, family= "binomial")
+
+# Alternative Model
+liberal_model_2 <- glm(vote_liberal ~ age_grp + gender + new_emp + new_educ, data=survey_data, family = "binomial")
+
+# Model validity
+liberal_model_va <- lm(vote_liberal ~ .,data = survey_data)
+mod_aic <- step(liberal_model_va, direction = "backward")
+summary(mod_aic)
+summary(liberal_model)
+summary(liberal_model_2)
+```
+  The multilevel regression model is built by using the independent variable vote_liberal, which indicates whether citizens vote for Liberal Party or not, since Liberal Party and Conservative Party are the top 2 candidates that might be the Prime Minister. The dependent variables are gender, age, employment and education. The predictor $y$ is a binary variable for whether the citizens vote for Liberal Party or not. The regression result shows that age group of 56 to 70, above 70, and university degree citizens are important to the relationship of the vote choice of Liberal Party based on the P-value that calculate from the regression. Besides, $\beta_0$ is the intercept and $\beta_1$ to $\beta_4$ represents the slope of the Age group from 26 above. From the p-value we can see that $\beta_3$ and $\beta_4$ are essential, and $\beta_3$ gives the meaning that, when the age group of 56 to 70 increase by 1 unit, the probability of voting Liberal Party would increase by 0.2091. Also, $\beta_4$ shows when the age group of above 70 increases by 1 unit, the probability of voting Liberal Party would increase by 0.2193. The gender of male could be represented by $\beta_5$, and the not in labour force status is represented by $\beta_6$, while the employed status is represented by $\beta_7$. Lastly, the high school education is represented by $\beta_8$ and university degree is represented by $\beta_9$, which is also important to the relationship of voting Liberal Party. The following is the expression:
+  
+  $$ \hat y = \hat\beta_{0} + \hat\beta_{1}*x_{age\_grp26to40} +  \hat\beta_{2}*x_{age\_grp41to55} + $$
+$$\hat\beta_{3}*x_{age\_grp56to70} +  \hat\beta_{4}*x_{age\_grpabove70} + \hat\beta_{5}*x_{genderMale} -$$
+$$\hat\beta_{6}*x_{new\_empnot in labor force} + \hat\beta_{7}*x_{new\_empunemployed} +$$
+$$\hat\beta_{8}*x_{new\_educunder high school} + \hat\beta_{9}*x_{new\_reducuiversity degree}$$
+
+The expression after plugging values of coefficients:
+
+
+
+$$ \hat y = \hat\beta_{0} + 0.0189269*x_{age\_grp26to40} +  0.0420439*x_{age\_grp41to55} +$$
+$$0.0.2091506*x_{age\_grp56to70} +  0.2193128*x_{age\_grpabove70} + 0.0010859*x_{genderMale} - $$
+$$0.0002924*x_{new\_empnot in labor force} - 0.0369788*x_{new\_empunemployed} - $$
+$$0.0613432*x_{new\_educunder high school} + 0.4293468*x_{new\_reducuiversity degree} $$
+
+In addition, the model is checked by the backward elimination by using Akaike's information criterion(AIC), which has the result of that the variable of employment and gender are not essential in this model, and this issue would be discussed in the following section.
+```{r, include=FALSE}
+
+# the post-stratification calculation
+census_data$logodds_estimate <-
+  liberal_model %>%
+  predict(newdata = census_data)
+
+census_data$estimate <-
+  exp(census_data$logodds_estimate)/(1+exp(census_data$logodds_estimate))
+
+liberal_prob_total <- census_data %>%
+  mutate(alp_predict_prop = estimate*n) %>%
+  summarise(alp_predict = sum(alp_predict_prop)/sum(n))
+
+liberal_prob_state <- census_data %>%
+  mutate(alp_predict_prop = estimate*n) %>%
+  group_by(province) %>%
+  summarise(alp_predict = sum(alp_predict_prop)/sum(n))
+
+liberal_prob_state <- liberal_prob_state %>% 
+  mutate(winner = ifelse(alp_predict >= 0.35, "Liberal Party", "Conservative Party"))
+
+liberal_prob_state <- liberal_prob_state %>% 
+  mutate(electoral_vote = 
+           case_when(province=="Alberta"~37,
+                     province=="British Columbia"~39,
+                     province=="Manitoba"~33,
+                     province=="New Brunswick"~31,
+                     province=="Newfoundland and Labrador"~29,
+                     province=="Nova Scotia"~33,
+                     province=="Ontario"~39,
+                     province=="Prince Edward Island"~30,
+                     province=="Quebec"~36,
+                     province=="Saskatchewan"~32)) 
+
+liberal_win <- liberal_prob_state %>% 
+  filter(winner == "Liberal Party")
+
+vote_liberal <- sum(liberal_win$electoral_vote)
+
+conservative_win <- liberal_prob_state %>% 
+  filter(winner == "Conservative Party")
+
+vote_conservative <- sum(conservative_win$electoral_vote)
+
+whole_vote <- vote_conservative + vote_liberal
+
+percent_liberal <- vote_liberal/whole_vote
+percent_conservative <- vote_conservative/whole_vote
+```
+
+  The process of post-stratification predicts the result by using the census data, while in this case we would assume that the whole population that was voted in the election, which is approximately the number of 37,950,000 citizens in total. This method predict the result by each stratum, and then combine they together to get the final prediction. In this case, the census data has smaller observations than survey data, and so the prediction might be different from the model, which gives the result of Conservative Party wins the election.
+  
+# Results
+
+
+  The following graph shows the percentage of each province that vote for Liberal Party. Since we assume the whole population participates in the vote section, the threshold of winning the seats in the legislation changes to 0.35, and so the result is that Conservative Party would win the election with 70% citizens votes for them. Liberal Party only wins 30% of the votes. The logistic regression model indicates that the variables employment and gender are not essential for predicting the ones who vote for Liberal Party, and also the model validity shows the same result. The $\widehat{y}^{ps}$ for Liberal Party is 29.8% and for Conservative Party is 70.2%. Although there are only 339 available votes that could use to calculate the predicted result, the decreasing of threshold by a certain percentage could give the similar results of the assumption of whole population votes for the election.
+  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(liberal_prob_state, aes(x = province, y = alp_predict)) +  geom_histogram(stat = "identity", color="black", fill="red") + theme_bw() + labs(title = "Predicted Percentage of People Vote For Liberal Party") + ylab("Predicted Percentage") + xlab("Province") + theme(axis.text.x=element_text(angle = 90))
+
+slices <- c(vote_liberal, vote_conservative)
+lbls <- c(paste("Liberal Party: ", round(percent_liberal, 2)), paste("Conservative Party: ", round(percent_conservative, 2)))
+pie3D(slices, labels = lbls, explode = 0.35, main = "Pie Chart of Vote")
+```
+# Discussion
+
+## Summary
+
+  Through the logistic regression model and post-stratification calculation, the predicted results of 2019 Canadian Election by assuming the whole population participate in the vote section is Conservative Party wins the election. The 2019 online survey data and general social survey data are used for creating survey data and census data. The data cleaning process selects 5 variables to do the analysis, and they are gender, age, employment, education and province. After building the multilevel regression model and check the model validity, it shows that gender and employment are not important for predicting the possibility of voting Liberal Party. The post-stratification calculation illustrates that Conservative Party would win the election by 70% of the population vote for them, while Liberal Party gets only 30% of the votes. This estimation might be varied from different thresholds of the indication of winning the seats.
+  
+## Conclusions
+
+  To conclude this report, we can look at the the predicted result of Conservative Party wins the election by setting the threshold of winning the seats is 0.35. This result might be varied if set a different threshold. The purpose of building this model is to show the importance of voting during the election since the result would be quite different. The actual winner of 2019 Canadian Election was Liberal Party, while the prediction is Conservative Party. The methods of logistic regression and post-stratification are sufficient in this case to calculate the result since they are objective with the variables. The result could be different as the understanding of the election system might be varied and the other methods could use to predict the results, which might bring the various predictions. Therefore, while building the model could help to predict the results, understanding the election system is the essential for people to have a correct estimate.
+
+## Weakness & Next Steps
+
+  The weakness of this prediction would be that the general social survey data was collected in 2017, and the online survey data was collected in 2019, which might affect the result since the data could be various in different years. Also, the setting of the threshold has great impact on the results, since it might directly change the winner to another party. The result would be accurate if we find a certain threshold that is calculated by the official department, which requires citizens to propose the needs of the official document to highlight the significance of voting. In addition, the raw data of survey and census data have many empty values, which could also affect the result since there is no sufficient data to build the model. The collection of data could change since phone call or online collection does not guarantee the quality of the information that participants provide, while the face-to-face collection might give high quality of information but requires more work.
+  
+  The next step of this analysis could be a construction of a survey to the citizens, which contains the question about their understanding of the importance of voting during the election. If most of them think voting is important, then this report has some influences on them; however, some people might still think voting is not essential, and then we might need to find some official documents as evidence of the report. Also, we could look at the total number of people that vote for the election in the 2023 Canadian Election, and using the model to estimate the result if the whole population votes. Then, compare to the actual results to see whether they are the same or different.
+
+# Reference
+- Stephenson, Laura B; Harell, Allison; Rubenson, Daniel; Loewen, Peter John, 2020, "2019 Canadian Election Study - Online Survey", https://doi.org/10.7910/DVN/DUS88V, Harvard Dataverse, V1
+
+- Smith, Tom W., Davern, Michael, Freese, Jeremy, and Morgan, Stephen L., General Social Surveys, 1972-2018 [machine-readable data file] /Principal Investigator, Smith, Tom W.; Co-Principal Investigators, Michael Davern, Jeremy Freese and Stephen L. Morgan; Sponsored by National Science Foundation. --NORC ed.-- Chicago: NORC, 2019.
+1 data file (64,814 logical records) + 1 codebook (3,758 pp.). -- (National Data Program for the Social Sciences, no. 25).
+
+- Rohan Alexander & Sam Caetano, (2020), gss_cleaning.R
+
